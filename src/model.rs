@@ -1,6 +1,7 @@
 use chrono::offset::TimeZone;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use failure::Error;
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_derive::*;
 use std::fmt::Display;
@@ -19,6 +20,7 @@ pub enum Log {
   Audit(Audit),
   #[serde(rename = "syslog")]
   Syslog(Syslog),
+  Invalid(Invalid),
 }
 
 /// Kernelログ
@@ -28,7 +30,11 @@ pub struct Journal {
   pub pid: u16,
 
   // pub bootid: [u8; 16],
-  #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
+  #[serde(
+    rename(deserialize = "PRIORITY"),
+    deserialize_with = "from_str",
+    default
+  )]
   pub priority: u8,
 
   #[serde(
@@ -109,17 +115,15 @@ pub struct Audit {
   #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
   pub identifier: String,
 
-  #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
+  #[serde(
+    rename(deserialize = "PRIORITY"),
+    deserialize_with = "from_str",
+    default
+  )]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
   pub message: String,
-
-  #[serde(rename(deserialize = "AUDIT_FIELD_RES"))]
-  pub audit_field_res: String,
-
-  #[serde(rename(deserialize = "AUDIT_FIELD_EXE"))]
-  pub audit_field_exe: String,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -145,6 +149,35 @@ pub struct Syslog {
 
   #[serde(rename(deserialize = "MESSAGE"))]
   pub message: String,
+
+  #[serde(
+    rename(deserialize = "__REALTIME_TIMESTAMP"),
+    deserialize_with = "datefmt"
+  )]
+  pub realtime_timestamp: DateTime<Utc>,
+
+  #[serde(
+    rename(deserialize = "__MONOTONIC_TIMESTAMP"),
+    deserialize_with = "from_str"
+  )]
+  pub monotonic_timestamp: u64,
+}
+
+/// Messageが不正なデータなどの場合
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
+pub struct Invalid {
+  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  pub identifier: String,
+
+  #[serde(
+    rename(deserialize = "PRIORITY"),
+    deserialize_with = "from_str",
+    default
+  )]
+  pub priority: u8,
+
+  #[serde(skip_deserializing)]
+  pub error: String,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -185,6 +218,21 @@ fn default_systemd_unit() -> String {
   "unknwon".to_string()
 }
 
+/// 意図しないフォーマットや項目の不足がまだあるため
+/// 想定外のデータはInvalidType型にして返す
+pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> {
+  match serde_json::from_str::<Log>(log) {
+    Ok(p) => Ok(p),
+    Err(e) => {
+      let mut p = serde_json::from_str::<Invalid>(log)?;
+      p.error = e.to_string();
+      warn!("deserialize: {:?}", e);
+      debug!("deserialize error at {}", log);
+      Ok(Log::Invalid(p))
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -222,6 +270,20 @@ mod tests {
 }"#;
     let p: Log = serde_json::from_str(testdata_log)?;
     println!("{:?}", p);
+    Ok(())
+  }
+  #[test]
+  fn parse_bytearray() -> Result<(), Error> {
+    let testdata_log = r#"{
+      "SYSLOG_IDENTIFIER" : "systemd",
+      "__REALTIME_TIMESTAMP" : "1491389822667666",
+      "__MONOTONIC_TIMESTAMP" : "71669967",
+      "PRIORITY" : "6",
+      "MESSAGE" : [27,91,51,54,109,97,112,112,95,49,32,32,124,27,91,48,109,32,50,48,50,48,45,48,49,45,49,53,32,48,51,58,49,54,58,50,51,32,115,112,105,107,101,32,108,111,118,111,116,95,115,108,97,109,46,115,108,97,109,95,115,101,114,118,105,99,101,114,91,54,54,93,32,73,78,70,79,32,103,101,116,32,115,112,111,116,115,58,32,91,39,101,110,116,114,97,110,99,101,39,93]
+}"#;
+
+    let p = deserialize_fallback(&testdata_log).unwrap();
+    println!("parse_bytearray: {:?}", p);
     Ok(())
   }
 

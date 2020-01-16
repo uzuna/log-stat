@@ -24,7 +24,7 @@ pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Er
     for (i, line) in input.lines().enumerate() {
         let line = line.unwrap();
         debug!("raw line {}: {:?}", i, line);
-        let p: model::Log = serde_json::from_str(&line)?;
+        let p: model::Log = model::deserialize_fallback(&line)?;
         debug!("{}: {:?}", i, p);
         counter.line += 1;
         match p {
@@ -47,6 +47,9 @@ pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Er
             model::Log::Audit(l) => {
                 *counter.facility.entry("audit".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
+            }
+            _ => {
+                *counter.facility.entry("invalid".to_string()).or_insert(0) += 1;
             }
         }
     }
