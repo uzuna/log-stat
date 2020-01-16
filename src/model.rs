@@ -10,15 +10,15 @@ use std::str::FromStr;
 #[serde(tag = "_TRANSPORT")]
 pub enum Log {
   #[serde(rename = "journal")]
-  Journal,
+  Journal(Journal),
   #[serde(rename = "kernel")]
-  Kernel,
+  Kernel(Kernel),
   #[serde(rename = "stdout")]
-  Stdout,
+  Stdout(Stdout),
   #[serde(rename = "audit")]
-  Audit,
+  Audit(Audit),
   #[serde(rename = "syslog")]
-  Syslog,
+  Syslog(Syslog),
 }
 
 /// Kernelログ
@@ -31,7 +31,10 @@ pub struct Journal {
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
-  #[serde(rename(deserialize = "_SYSTEMD_UNIT"))]
+  #[serde(
+    rename(deserialize = "_SYSTEMD_UNIT"),
+    default = "default_systemd_unit"
+  )]
   pub systemd_unit: String,
 
   #[serde(rename(deserialize = "MESSAGE"))]
@@ -53,11 +56,8 @@ pub struct Journal {
 /// Kernelログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Kernel {
-  #[serde(
-    rename(deserialize = "SYSLOG_IDENTIFIER"),
-    deserialize_with = "from_str"
-  )]
-  pub identifier: u16,
+  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
@@ -81,11 +81,8 @@ pub struct Kernel {
 /// Stdoutログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Stdout {
-  #[serde(
-    rename(deserialize = "SYSLOG_IDENTIFIER"),
-    deserialize_with = "from_str"
-  )]
-  pub identifier: u16,
+  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
@@ -109,11 +106,8 @@ pub struct Stdout {
 /// auditログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Audit {
-  #[serde(
-    rename(deserialize = "SYSLOG_IDENTIFIER"),
-    deserialize_with = "from_str"
-  )]
-  pub identifier: u16,
+  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
@@ -143,11 +137,8 @@ pub struct Audit {
 /// syslogログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Syslog {
-  #[serde(
-    rename(deserialize = "SYSLOG_IDENTIFIER"),
-    deserialize_with = "from_str"
-  )]
-  pub identifier: u16,
+  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
@@ -188,6 +179,10 @@ where
   let s = i64::from_str(&s).unwrap();
   let ts = NaiveDateTime::from_timestamp(s / 1000000, (s as u32 % 1000000) * 1000);
   Ok(Utc.from_utc_datetime(&ts))
+}
+
+fn default_systemd_unit() -> String {
+  "unknwon".to_string()
 }
 
 #[cfg(test)]
