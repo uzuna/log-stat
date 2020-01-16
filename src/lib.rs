@@ -6,11 +6,21 @@ use std::collections::HashMap;
 use std::io::BufRead;
 mod model;
 
+/// ログ全体の統計情報
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct LogTotalCount {
     pub line: usize,
     pub message_length: usize,
     pub facility: HashMap<String, usize>,
+}
+
+/// サービスごとの統計情報
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ServiceCount {
+    pub line: usize,
+    pub message_length: usize,
+    pub priorities: HashMap<String, usize>,
+    pub keywords: HashMap<String, usize>,
 }
 
 pub struct DateTimeRange {
