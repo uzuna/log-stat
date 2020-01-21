@@ -90,6 +90,12 @@ pub struct Stdout {
   #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
   pub identifier: String,
 
+  #[serde(
+    rename(deserialize = "_SYSTEMD_UNIT"),
+    default = "default_systemd_unit"
+  )]
+  pub systemd_unit: String,
+
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
