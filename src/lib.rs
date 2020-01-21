@@ -8,6 +8,13 @@ mod model;
 
 /// ログ全体の統計情報
 #[derive(Debug, Clone, PartialEq, Default)]
+pub struct LogReport {
+    pub total: LogTotalCount,
+    pub service: HashMap<String, ServiceCount>,
+}
+
+/// ログ全体の統計情報
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct LogTotalCount {
     pub line: usize,
     pub message_length: usize,
@@ -19,7 +26,7 @@ pub struct LogTotalCount {
 pub struct ServiceCount {
     pub line: usize,
     pub message_length: usize,
-    pub priorities: HashMap<String, usize>,
+    pub priorities: HashMap<u8, usize>,
     pub keywords: HashMap<String, usize>,
 }
 
@@ -29,8 +36,9 @@ pub struct DateTimeRange {
 }
 
 /// line count
-pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Error> {
+pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error> {
     let mut counter: LogTotalCount = Default::default();
+    let mut services_counter: HashMap<String, ServiceCount> = HashMap::new();
     for (i, line) in input.lines().enumerate() {
         let line = line.unwrap();
         debug!("raw line {}: {:?}", i, line);
@@ -45,6 +53,11 @@ pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Er
             model::Log::Journal(l) => {
                 *counter.facility.entry("journal".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
+
+                let mut s = services_counter.entry(l.systemd_unit).or_default();
+                s.line += 1;
+                s.message_length += l.message.len();
+                *s.priorities.entry(l.priority).or_insert(0) += 1;
             }
             model::Log::Syslog(l) => {
                 *counter.facility.entry("syslog".to_string()).or_insert(0) += 1;
@@ -53,6 +66,11 @@ pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Er
             model::Log::Stdout(l) => {
                 *counter.facility.entry("stdout".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
+
+                let mut s = services_counter.entry(l.systemd_unit).or_default();
+                s.line += 1;
+                s.message_length += l.message.len();
+                *s.priorities.entry(l.priority).or_insert(0) += 1;
             }
             model::Log::Audit(l) => {
                 *counter.facility.entry("audit".to_string()).or_insert(0) += 1;
@@ -63,7 +81,10 @@ pub fn count(input: impl BufRead) -> Result<LogTotalCount, serde_json::error::Er
             }
         }
     }
-    Ok(counter)
+    Ok(LogReport {
+        total: counter,
+        service: services_counter,
+    })
 }
 
 #[cfg(test)]
