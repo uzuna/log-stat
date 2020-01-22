@@ -58,7 +58,6 @@ pub struct Journal {
   )]
   pub monotonic_timestamp: u64,
 }
-
 /// Kernelログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Kernel {
