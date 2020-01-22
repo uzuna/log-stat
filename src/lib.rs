@@ -16,7 +16,8 @@ pub struct LogReport {
 
 impl fmt::Display for LogReport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "total: {}", &self.total)?;
+        writeln!(f, "total:\n{}", &self.total)?;
+        write!(f, "service:\n")?;
         for (name, srv) in &self.service {
             writeln!(f, "- {}\n{}", name, srv)?;
         }
@@ -35,9 +36,14 @@ impl fmt::Display for LogTotalCount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "line: {}\nmessage_length:{}",
+            "  line: {}\n  message_length:{}\n",
             &self.line, &self.message_length
-        )
+        )?;
+        write!(f, "facility:\n")?;
+        for (name, count) in &self.facility {
+            writeln!(f, "  {}: {}", name, count)?;
+        }
+        Ok(())
     }
 }
 

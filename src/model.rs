@@ -58,10 +58,14 @@ pub struct Journal {
   )]
   pub monotonic_timestamp: u64,
 }
+
 /// Kernelログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Kernel {
-  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
   pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
@@ -86,7 +90,10 @@ pub struct Kernel {
 /// Stdoutログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Stdout {
-  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
   pub identifier: String,
 
   #[serde(
@@ -117,7 +124,10 @@ pub struct Stdout {
 /// auditログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Audit {
-  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
   pub identifier: String,
 
   #[serde(
@@ -146,7 +156,10 @@ pub struct Audit {
 /// syslogログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Syslog {
-  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
   pub identifier: String,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
@@ -171,7 +184,10 @@ pub struct Syslog {
 /// Messageが不正なデータなどの場合
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Invalid {
-  #[serde(rename(deserialize = "SYSLOG_IDENTIFIER"))]
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
   pub identifier: String,
 
   #[serde(
@@ -223,6 +239,9 @@ fn default_systemd_unit() -> String {
   "unknwon".to_string()
 }
 
+fn default_syslog_identity() -> String {
+  "unknwon".to_string()
+}
 /// 意図しないフォーマットや項目の不足がまだあるため
 /// 想定外のデータはInvalidType型にして返す
 pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> {
