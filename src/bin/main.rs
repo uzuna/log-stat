@@ -6,6 +6,7 @@ use std::io::BufReader;
 use std::process::{Command, Stdio};
 
 fn main() {
+  env_logger::init();
   let process = match Command::new("sudo")
     .args(&["journalctl", "-o", "json"])
     .stdout(Stdio::piped())
