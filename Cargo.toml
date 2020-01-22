@@ -17,3 +17,6 @@ env_logger = "0.7.1"
 [dependencies.chrono]
 features = ["serde"]
 version= "0.4"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"

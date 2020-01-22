@@ -3,6 +3,7 @@ extern crate test;
 use chrono::{DateTime, Utc};
 use log::{debug, error, info, warn};
 use std::collections::HashMap;
+use std::fmt;
 use std::io::BufRead;
 mod model;
 
@@ -13,12 +14,31 @@ pub struct LogReport {
     pub service: HashMap<String, ServiceCount>,
 }
 
+impl fmt::Display for LogReport {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "total: {}", &self.total)?;
+        for (name, srv) in &self.service {
+            writeln!(f, "- {}\n{}", name, srv)?;
+        }
+        Ok(())
+    }
+}
 /// ログ全体の統計情報
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct LogTotalCount {
     pub line: usize,
     pub message_length: usize,
     pub facility: HashMap<String, usize>,
+}
+
+impl fmt::Display for LogTotalCount {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "line: {}\nmessage_length:{}",
+            &self.line, &self.message_length
+        )
+    }
 }
 
 /// サービスごとの統計情報
@@ -28,6 +48,16 @@ pub struct ServiceCount {
     pub message_length: usize,
     pub priorities: HashMap<u8, usize>,
     pub keywords: HashMap<String, usize>,
+}
+
+impl fmt::Display for ServiceCount {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "  - line: {}\n  - length:{}\n  - priority:{:?}",
+            &self.line, &self.message_length, &self.priorities
+        )
+    }
 }
 
 pub struct DateTimeRange {
@@ -98,6 +128,6 @@ mod tests {
         let file = File::open("./tests/testdata/sample.log").unwrap();
         let reader = BufReader::new(&file);
         let result = count(reader).unwrap();
-        println!("{:?}", result);
+        println!("{}", result);
     }
 }
