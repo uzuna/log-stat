@@ -299,6 +299,13 @@ mod tests {
     pub message: String,
     pub number: u64,
   }
+
+  #[derive(Debug, Deserialize, Serialize)]
+  #[serde(tag = "type")]
+  enum Xstruct<'a> {
+    Long(StringStruct),
+    Short(#[serde(borrow)] StrStruct<'a>),
+  }
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
   struct StrStruct<'a> {
     pub identifier: &'a str,
@@ -364,14 +371,17 @@ mod tests {
     Ok(())
   }
   // ベンチマークの結果i64でパースするほうがstringで行うより早かった
-  static TEST_JSON_DATA: &'static str = r#"{"identifier": "test_json_data", number: 23345667788}"#;
+  static TEST_JSON_DATA_SHORT: &'static str =
+    r#"{"identifier": "test_json_data", number: 23345667788, type:"short"}"#;
+  static TEST_JSON_DATA_LONG: &'static str =
+    r#"{"identifier": "test_json_data_looooong", number: 23345667788, type:"long"}"#;
   #[bench]
   fn bench_parse_json_to_string(b: &mut Bencher) {
     fn parse(s: &str) -> Result<StringStruct, Error> {
       let p: StringStruct = serde_json::from_str(s)?;
       Ok(p)
     }
-    b.iter(|| parse(TEST_JSON_DATA));
+    b.iter(|| parse(TEST_JSON_DATA_SHORT));
   }
   #[bench]
   fn bench_parse_json_to_str(b: &mut Bencher) {
@@ -379,7 +389,23 @@ mod tests {
       let p: StrStruct = serde_json::from_str(s)?;
       Ok(p)
     }
-    b.iter(|| parse(TEST_JSON_DATA));
+    b.iter(|| parse(TEST_JSON_DATA_SHORT));
+  }
+  #[bench]
+  fn bench_parse_json_enum_short(b: &mut Bencher) {
+    fn parse(s: &str) -> Result<Xstruct, Error> {
+      let p: Xstruct = serde_json::from_str(s)?;
+      Ok(p)
+    }
+    b.iter(|| parse(TEST_JSON_DATA_SHORT));
+  }
+  #[bench]
+  fn bench_parse_json_enum_long(b: &mut Bencher) {
+    fn parse(s: &str) -> Result<Xstruct, Error> {
+      let p: Xstruct = serde_json::from_str(s)?;
+      Ok(p)
+    }
+    b.iter(|| parse(TEST_JSON_DATA_LONG));
   }
 
   // ベンチマークの結果i64でパースするほうがstringで行うより早かった
