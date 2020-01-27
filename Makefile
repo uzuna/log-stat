@@ -20,3 +20,7 @@ build_arm:
 
 setup:
 	cargo install cross
+
+.PHONY: deb
+deb:
+	cargo deb
