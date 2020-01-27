@@ -266,12 +266,13 @@ where
 }
 
 fn default_systemd_unit() -> String {
-  "unknwon".to_string()
+  "unknown".to_string()
 }
 
 fn default_syslog_identity() -> String {
-  "unknwon".to_string()
+  "unknown".to_string()
 }
+
 /// 意図しないフォーマットや項目の不足がまだあるため
 /// 想定外のデータはInvalidType型にして返す
 pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> {
@@ -290,6 +291,29 @@ pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> 
 mod tests {
   use super::*;
   use test::Bencher;
+
+  #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
+  struct StringStruct {
+    pub identifier: String,
+    #[serde(default = "default_message_string")]
+    pub message: String,
+    pub number: u64,
+  }
+  #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
+  struct StrStruct<'a> {
+    pub identifier: &'a str,
+    #[serde(default = "default_message_str")]
+    pub message: &'a str,
+    pub number: u64,
+  }
+  fn default_message_string() -> String {
+    "unknown".to_string()
+  }
+
+  fn default_message_str() -> &'static str {
+    "unknown"
+  }
+
   #[test]
   fn it_works() -> Result<(), Error> {
     let testdata_log = r#"{
@@ -339,11 +363,40 @@ mod tests {
     println!("parse_bytearray: {:?}", p);
     Ok(())
   }
+  // ベンチマークの結果i64でパースするほうがstringで行うより早かった
+  static TEST_JSON_DATA: &'static str = r#"{"identifier": "test_json_data", number: 23345667788}"#;
+  #[bench]
+  fn bench_parse_json_to_string(b: &mut Bencher) {
+    fn parse(s: &str) -> Result<StringStruct, Error> {
+      let p: StringStruct = serde_json::from_str(s)?;
+      Ok(p)
+    }
+    b.iter(|| parse(TEST_JSON_DATA));
+  }
+  #[bench]
+  fn bench_parse_json_to_str(b: &mut Bencher) {
+    fn parse(s: &str) -> Result<StrStruct, Error> {
+      let p: StrStruct = serde_json::from_str(s)?;
+      Ok(p)
+    }
+    b.iter(|| parse(TEST_JSON_DATA));
+  }
 
   // ベンチマークの結果i64でパースするほうがstringで行うより早かった
   static UNIX_MICRO_SECOND_EXAMPLE: &'static str = "1491389822667666";
   #[bench]
   fn bench_parse_i64(b: &mut Bencher) {
+    use chrono::offset::TimeZone;
+    use chrono::{DateTime, NaiveDateTime, Utc};
+    fn parse(s: &str) -> DateTime<Utc> {
+      let s = i64::from_str(s).unwrap();
+      let ts = NaiveDateTime::from_timestamp(s / 1000000, (s as u32 % 1000000) * 1000);
+      Utc.from_utc_datetime(&ts)
+    }
+    b.iter(|| parse(UNIX_MICRO_SECOND_EXAMPLE));
+  }
+  #[bench]
+  fn bench_parse_i64_through_string(b: &mut Bencher) {
     use chrono::offset::TimeZone;
     use chrono::{DateTime, NaiveDateTime, Utc};
     fn parse(s: String) -> DateTime<Utc> {
@@ -357,10 +410,10 @@ mod tests {
   fn bench_parse_string(b: &mut Bencher) {
     use chrono::offset::TimeZone;
     use chrono::{DateTime, NaiveDateTime, Utc};
-    fn parse(s: String) -> DateTime<Utc> {
+    fn parse(s: &str) -> DateTime<Utc> {
       let ts = NaiveDateTime::parse_from_str(&s[0..s.len() - 6], "%s").unwrap();
       Utc.from_utc_datetime(&ts)
     }
-    b.iter(|| parse(String::from(UNIX_MICRO_SECOND_EXAMPLE)));
+    b.iter(|| parse(UNIX_MICRO_SECOND_EXAMPLE));
   }
 }
