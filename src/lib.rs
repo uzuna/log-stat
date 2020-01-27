@@ -77,9 +77,9 @@ pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error>
     let mut services_counter: HashMap<String, ServiceCount> = HashMap::new();
     for (i, line) in input.lines().enumerate() {
         let line = line.unwrap();
-        debug!("raw line {}: {:?}", i, line);
+        // debug!("raw line {}: {:?}", i, line);
         let p: model::Log = model::deserialize_fallback(&line)?;
-        debug!("{}: {:?}", i, p);
+        // debug!("{}: {:?}", i, p);
         counter.line += 1;
         match p {
             model::Log::Kernel(l) => {
@@ -110,6 +110,10 @@ pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error>
             }
             model::Log::Audit(l) => {
                 *counter.facility.entry("audit".to_string()).or_insert(0) += 1;
+                counter.message_length += l.message.len();
+            }
+            model::Log::Driver(l) => {
+                *counter.facility.entry("driver".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
             }
             _ => {
