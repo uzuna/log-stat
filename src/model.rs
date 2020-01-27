@@ -20,6 +20,8 @@ pub enum Log {
   Audit(Audit),
   #[serde(rename = "syslog")]
   Syslog(Syslog),
+  #[serde(rename = "driver")]
+  Driver(Driver),
   Invalid(Invalid),
 }
 
@@ -181,6 +183,34 @@ pub struct Syslog {
   pub monotonic_timestamp: u64,
 }
 
+/// driverログ
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
+pub struct Driver {
+  #[serde(
+    rename(deserialize = "SYSLOG_IDENTIFIER"),
+    default = "default_syslog_identity"
+  )]
+  pub identifier: String,
+
+  #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
+  pub priority: u8,
+
+  #[serde(rename(deserialize = "MESSAGE"))]
+  pub message: String,
+
+  #[serde(
+    rename(deserialize = "__REALTIME_TIMESTAMP"),
+    deserialize_with = "datefmt"
+  )]
+  pub realtime_timestamp: DateTime<Utc>,
+
+  #[serde(
+    rename(deserialize = "__MONOTONIC_TIMESTAMP"),
+    deserialize_with = "from_str"
+  )]
+  pub monotonic_timestamp: u64,
+}
+
 /// Messageが不正なデータなどの場合
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Invalid {
@@ -250,8 +280,7 @@ pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> 
     Err(e) => {
       let mut p = serde_json::from_str::<Invalid>(log)?;
       p.error = e.to_string();
-      warn!("deserialize: {:?}", e);
-      debug!("deserialize error at {}", log);
+      warn!("deserialize: {}, {:?}", p.identifier, e);
       Ok(Log::Invalid(p))
     }
   }
