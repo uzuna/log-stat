@@ -31,3 +31,16 @@ codegen-units = 16
 panic = 'unwind'
 incremental = false
 overflow-checks = false
+
+
+[package.metadata.deb]
+maintainer = "Fumiya Fujinaka <uzuna.kf@gmail.com>"
+copyright = "2020, Fumiya Fujinaka <uzuna.kf@gmail.com>"
+extended-description = """log parser."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/main", "usr/bin/logstat", "755"],
+    ["README.md", "usr/share/doc/cargo-deb/README", "644"],
+]
