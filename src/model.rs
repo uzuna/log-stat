@@ -1,7 +1,7 @@
 use chrono::offset::TimeZone;
 use chrono::{DateTime, NaiveDateTime, Utc};
 
-use log::{warn};
+use log::warn;
 use serde::{Deserialize, Deserializer};
 use serde_derive::*;
 use std::fmt::Display;
@@ -290,6 +290,7 @@ pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> 
 #[cfg(test)]
 mod tests {
   use super::*;
+  use failure::Error;
   use test::Bencher;
 
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
