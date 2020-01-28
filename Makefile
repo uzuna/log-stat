@@ -1,26 +1,42 @@
 RUSTFLAGS='-Zstrip-debuginfo-if-disabled=yes'
 
-.PHONY: build_dev
-build_dev:
+setup:
+	cargo install cross	
+
+.PHONY: build_dev_amd64 build_dev_arm
+build_dev_amd64:
 	cargo build
 
-.PHONY: build_arm_dev
-build_arm_dev:
+build_dev_arm:
 	cross build --target=aarch64-unknown-linux-gnu
 
 # release build
 # debug optionもなにもつかわない
-.PHONY: build
-build:
+.PHONY: build build_amd64 build_arm
+build: build_amd64 build_arm
+
+build_amd64: target/release/logstat
+
+target/release/logstat:
 	RUSTFLAGS=${RUSTFLAGS} cargo build --release
 
-.PHONY: build_arm
-build_arm:
+build_arm: target/aarch64-unknown-linux-gnu/release/logstat
+
+target/aarch64-unknown-linux-gnu/release/logstat:
 	RUSTFLAGS=${RUSTFLAGS} cross build --target=aarch64-unknown-linux-gnu --release
 
-setup:
-	cargo install cross
 
-.PHONY: deb
-deb:
-	cargo deb
+# deb package
+.PHONY: deb deb_amd64 deb_arm
+deb: build deb_amd64 deb_arm
+
+deb_amd64:
+	cargo deb --no-build
+
+deb_arm:
+	cargo deb --target=aarch64-unknown-linux-gnu --no-build
+
+# clean target
+.PHONY: clean
+clean:
+	cargo clean
