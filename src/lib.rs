@@ -90,7 +90,9 @@ pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error>
                 *counter.facility.entry("journal".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
 
-                let mut s = services_counter.entry(l.systemd_unit).or_default();
+                let mut s = services_counter
+                    .entry(l.systemd_unit.to_string())
+                    .or_default();
                 s.line += 1;
                 s.message_length += l.message.len();
                 *s.priorities.entry(l.priority).or_insert(0) += 1;
@@ -103,7 +105,9 @@ pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error>
                 *counter.facility.entry("stdout".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
 
-                let mut s = services_counter.entry(l.systemd_unit).or_default();
+                let mut s = services_counter
+                    .entry(l.systemd_unit.to_string())
+                    .or_default();
                 s.line += 1;
                 s.message_length += l.message.len();
                 *s.priorities.entry(l.priority).or_insert(0) += 1;

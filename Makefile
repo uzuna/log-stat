@@ -54,3 +54,20 @@ format:
 check_link:
 	ldd target/${TARGET_AMD64}/release/logstat || true
 	ldd target/${TARGET_ARM64}/release/logstat || true
+
+
+# テスト
+.PHONY: test
+test:
+	cargo test
+	check_alloc
+
+.PHONY: check_alloc
+check_alloc:
+	valgrind --leak-check=full target/debug/logstat --cmd "cat ./tests/testdata/sample.log"
+
+# ベンチマーク
+.PHONY: bench
+bench:
+	cargo bench
+	
