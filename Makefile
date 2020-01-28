@@ -45,6 +45,9 @@ deb_arm:
 clean:
 	cargo clean
 
+.PHONY: format
+format:
+	cargo fix
 
 # check link
 .PHONY: check_link

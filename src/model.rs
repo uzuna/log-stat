@@ -1,8 +1,8 @@
 use chrono::offset::TimeZone;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use failure::Error;
-use log::{debug, error, info, warn};
-use serde::{Deserialize, Deserializer, Serialize};
+
+use log::{warn};
+use serde::{Deserialize, Deserializer};
 use serde_derive::*;
 use std::fmt::Display;
 use std::str::FromStr;
