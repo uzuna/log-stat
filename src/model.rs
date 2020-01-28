@@ -304,7 +304,7 @@ mod tests {
   #[derive(Debug, Deserialize, Serialize)]
   #[serde(tag = "type")]
   enum Xstruct<'a> {
-    Long(StringStruct),
+    Long(#[serde(borrow)] StringStruct<'a>),
     Short(#[serde(borrow)] StrStruct<'a>),
   }
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]

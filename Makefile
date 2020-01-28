@@ -4,6 +4,7 @@ TARGET_ARM64=aarch64-unknown-linux-gnu
 
 setup:
 	cargo install cross	
+	cargo install cargo-deb
 
 .PHONY: build_dev_amd64 build_dev_arm
 build_dev_amd64:

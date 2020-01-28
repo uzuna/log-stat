@@ -1,0 +1,34 @@
+name: Rust
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup Rust
+      uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: nightly
+    - uses: actions/checkout@v1
+    # - name: Set env
+    #   run: echo "::set-env name=VERSION::$(cargo pkgid | sed 's/\:/\t/g' | cut -f 3)"
+    - id: cargo-version
+      run: echo "::set-output name=version::$(cargo version)"
+    - id: pkg-version
+      run: echo "::set-output name=version::0.1.0"
+
+    # - name: Setup
+    #   run: make setup
+    # - name: Build
+    #   run: make build
+    - name: Run tests
+      run: cargo test
+    # - name: Archive production artifacts
+    #   uses: actions/upload-artifact@v1
+    #   with:
+    #     name: log-stat_${{ env.RELEASE_VERSION }}_amd64.deb
+    #     path: target/x86_64-unknown-linux-musl/debian/log-stat_${{ env.RELEASE_VERSION }}_amd64.deb
+ 
