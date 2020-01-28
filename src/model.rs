@@ -9,25 +9,25 @@ use std::str::FromStr;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "_TRANSPORT")]
-pub enum Log {
+pub enum Log<'a> {
   #[serde(rename = "journal")]
-  Journal(Journal),
+  Journal(#[serde(borrow)] Journal<'a>),
   #[serde(rename = "kernel")]
-  Kernel(Kernel),
+  Kernel(#[serde(borrow)] Kernel<'a>),
   #[serde(rename = "stdout")]
-  Stdout(Stdout),
+  Stdout(#[serde(borrow)] Stdout<'a>),
   #[serde(rename = "audit")]
-  Audit(Audit),
+  Audit(#[serde(borrow)] Audit<'a>),
   #[serde(rename = "syslog")]
-  Syslog(Syslog),
+  Syslog(#[serde(borrow)] Syslog<'a>),
   #[serde(rename = "driver")]
-  Driver(Driver),
-  Invalid(Invalid),
+  Driver(#[serde(borrow)] Driver<'a>),
+  Invalid(#[serde(borrow)] Invalid<'a>),
 }
 
 /// Kernelログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Journal {
+pub struct Journal<'a> {
   #[serde(rename(deserialize = "_PID"), deserialize_with = "from_str")]
   pub pid: u16,
 
@@ -43,10 +43,10 @@ pub struct Journal {
     rename(deserialize = "_SYSTEMD_UNIT"),
     default = "default_systemd_unit"
   )]
-  pub systemd_unit: String,
+  pub systemd_unit: &'a str,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -63,18 +63,18 @@ pub struct Journal {
 
 /// Kernelログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Kernel {
+pub struct Kernel<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -91,24 +91,24 @@ pub struct Kernel {
 
 /// Stdoutログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Stdout {
+pub struct Stdout<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(
     rename(deserialize = "_SYSTEMD_UNIT"),
     default = "default_systemd_unit"
   )]
-  pub systemd_unit: String,
+  pub systemd_unit: &'a str,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -125,12 +125,12 @@ pub struct Stdout {
 
 /// auditログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Audit {
+pub struct Audit<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(
     rename(deserialize = "PRIORITY"),
@@ -140,7 +140,7 @@ pub struct Audit {
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -157,18 +157,18 @@ pub struct Audit {
 
 /// syslogログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Syslog {
+pub struct Syslog<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -185,18 +185,18 @@ pub struct Syslog {
 
 /// driverログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Driver {
+pub struct Driver<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: String,
+  pub message: &'a str,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -213,12 +213,12 @@ pub struct Driver {
 
 /// Messageが不正なデータなどの場合
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-pub struct Invalid {
+pub struct Invalid<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: String,
+  pub identifier: &'a str,
 
   #[serde(
     rename(deserialize = "PRIORITY"),
@@ -265,12 +265,12 @@ where
   Ok(Utc.from_utc_datetime(&ts))
 }
 
-fn default_systemd_unit() -> String {
-  "unknown".to_string()
+fn default_systemd_unit() -> &'static str {
+  "unknown"
 }
 
-fn default_syslog_identity() -> String {
-  "unknown".to_string()
+fn default_syslog_identity() -> &'static str {
+  "unknown"
 }
 
 /// 意図しないフォーマットや項目の不足がまだあるため
@@ -294,8 +294,8 @@ mod tests {
   use test::Bencher;
 
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
-  struct StringStruct {
-    pub identifier: String,
+  struct StringStruct<'a> {
+    pub identifier: &'a str,
     #[serde(default = "default_message_string")]
     pub message: String,
     pub number: u64,
