@@ -1,8 +1,12 @@
 [package]
 name = "log-stat"
+license = "MIT"
 version = "0.1.0"
 authors = ["Fumiya Fujinaka <uzuna.kf@gmail.com>"]
 edition = "2018"
+readme = "README.md"
+description = "Aggregate logs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
