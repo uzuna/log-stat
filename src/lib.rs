@@ -1,7 +1,7 @@
 #![feature(test)]
 extern crate test;
 use chrono::{DateTime, Utc};
-use log::{debug, error, info, warn};
+
 use std::collections::HashMap;
 use std::fmt;
 use std::io::BufRead;
@@ -75,7 +75,7 @@ pub struct DateTimeRange {
 pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error> {
     let mut counter: LogTotalCount = Default::default();
     let mut services_counter: HashMap<String, ServiceCount> = HashMap::new();
-    for (i, line) in input.lines().enumerate() {
+    for (_i, line) in input.lines().enumerate() {
         let line = line.unwrap();
         // debug!("raw line {}: {:?}", i, line);
         let p: model::Log = model::deserialize_fallback(&line)?;

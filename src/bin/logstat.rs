@@ -1,11 +1,11 @@
 extern crate clap;
 extern crate log_stat;
-use clap::{crate_name, crate_version, App, Arg, SubCommand};
+use clap::{crate_name, crate_version, App, Arg};
 use log::debug;
 use log_stat::*;
 use std::error::Error;
-use std::io;
-use std::io::prelude::*;
+
+
 use std::io::BufReader;
 use std::process::{Command, Stdio};
 
