@@ -299,6 +299,7 @@ mod tests {
     pub message: String,
     pub number: u64,
   }
+<<<<<<< HEAD
 
   #[derive(Debug, Deserialize, Serialize)]
   #[serde(tag = "type")]
@@ -306,6 +307,8 @@ mod tests {
     Long(StringStruct),
     Short(#[serde(borrow)] StrStruct<'a>),
   }
+=======
+>>>>>>> 98e5c76... add benchmark comparing str and string
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
   struct StrStruct<'a> {
     pub identifier: &'a str,
@@ -371,17 +374,25 @@ mod tests {
     Ok(())
   }
   // ベンチマークの結果i64でパースするほうがstringで行うより早かった
+<<<<<<< HEAD
   static TEST_JSON_DATA_SHORT: &'static str =
     r#"{"identifier": "test_json_data", number: 23345667788, type:"short"}"#;
   static TEST_JSON_DATA_LONG: &'static str =
     r#"{"identifier": "test_json_data_looooong", number: 23345667788, type:"long"}"#;
+=======
+  static TEST_JSON_DATA: &'static str = r#"{"identifier": "test_json_data", number: 23345667788}"#;
+>>>>>>> 98e5c76... add benchmark comparing str and string
   #[bench]
   fn bench_parse_json_to_string(b: &mut Bencher) {
     fn parse(s: &str) -> Result<StringStruct, Error> {
       let p: StringStruct = serde_json::from_str(s)?;
       Ok(p)
     }
+<<<<<<< HEAD
     b.iter(|| parse(TEST_JSON_DATA_SHORT));
+=======
+    b.iter(|| parse(TEST_JSON_DATA));
+>>>>>>> 98e5c76... add benchmark comparing str and string
   }
   #[bench]
   fn bench_parse_json_to_str(b: &mut Bencher) {
@@ -389,6 +400,7 @@ mod tests {
       let p: StrStruct = serde_json::from_str(s)?;
       Ok(p)
     }
+<<<<<<< HEAD
     b.iter(|| parse(TEST_JSON_DATA_SHORT));
   }
   #[bench]
@@ -406,6 +418,9 @@ mod tests {
       Ok(p)
     }
     b.iter(|| parse(TEST_JSON_DATA_LONG));
+=======
+    b.iter(|| parse(TEST_JSON_DATA));
+>>>>>>> 98e5c76... add benchmark comparing str and string
   }
 
   // ベンチマークの結果i64でパースするほうがstringで行うより早かった
