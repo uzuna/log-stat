@@ -15,4 +15,10 @@ journallogの簡単な統計処理を行って適切なロギングができて�
 ==19460== HEAP SUMMARY:
 ==19460==     in use at exit: 384 bytes in 6 blocks
 ==19460==   total heap usage: 139 allocs, 133 frees, 40,734 bytes allocated
+
+
+# &str 100 line
+==5786== HEAP SUMMARY:
+==5786==     in use at exit: 384 bytes in 6 blocks
+==5786==   total heap usage: 1,858 allocs, 1,852 frees, 548,764 bytes allocated
 ```

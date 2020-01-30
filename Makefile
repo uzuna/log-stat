@@ -61,7 +61,6 @@ check_link:
 .PHONY: test
 test:
 	cargo test
-	check_alloc
 
 .PHONY: check_alloc
 check_alloc:

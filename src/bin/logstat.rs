@@ -18,7 +18,7 @@ fn main() {
         .long("cmd")
         .value_name("ARGS")
         .help("Set using command")
-        .default_value("sudo journalclt -o json")
+        .default_value("sudo journalctl -o json")
         .takes_value(true),
     )
     .get_matches();
