@@ -18,7 +18,12 @@ impl fmt::Display for LogReport {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "total:\n{}", &self.total)?;
         write!(f, "service:\n")?;
+        let mut list = Vec::new();
         for (name, srv) in &self.service {
+            list.push((name, srv))
+        }
+        list.sort_by(|(_name_a, srv_a), (_name_b, srv_b)| return srv_a.compare_count(srv_b));
+        for (name, srv) in &list {
             writeln!(f, "- {}\n{}", name, srv)?;
         }
         Ok(())
@@ -54,6 +59,28 @@ pub struct ServiceCount {
     pub message_length: usize,
     pub priorities: HashMap<u8, usize>,
     pub keywords: HashMap<String, usize>,
+}
+
+impl ServiceCount {
+    fn total_line_count(&self) -> usize {
+        let mut count = 0;
+        for (_, n) in &self.priorities {
+            count += n;
+        }
+        count
+    }
+
+    fn compare_count(&self, other: &Self) -> std::cmp::Ordering {
+        let a = self.total_line_count();
+        let b = other.total_line_count();
+        if a < b {
+            std::cmp::Ordering::Less
+        } else if a > b {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Equal
+        }
+    }
 }
 
 impl fmt::Display for ServiceCount {
@@ -143,5 +170,22 @@ mod tests {
         let reader = BufReader::new(&file);
         let result = count(reader).unwrap();
         println!("{}", result);
+    }
+    #[test]
+    fn service_count_order() {
+        let s1 = ServiceCount {
+            line: 1,
+            priorities: [(b'4', 1)].iter().cloned().collect::<HashMap<u8, usize>>(),
+            ..Default::default()
+        };
+        let s2 = ServiceCount {
+            line: 10,
+            priorities: [(b'4', 10)].iter().cloned().collect::<HashMap<u8, usize>>(),
+            ..Default::default()
+        };
+
+        assert_eq!(s1.compare_count(&s2), std::cmp::Ordering::Less);
+        assert_eq!(s1.compare_count(&s1), std::cmp::Ordering::Equal);
+        assert_eq!(s2.compare_count(&s1), std::cmp::Ordering::Greater);
     }
 }
