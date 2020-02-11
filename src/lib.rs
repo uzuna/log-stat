@@ -41,7 +41,7 @@ impl fmt::Display for LogTotalCount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "  line: {}\n  message_length:{}\n",
+            "  line: {}\n  message_length: {}\n",
             &self.line, &self.message_length
         )?;
         write!(f, "facility:\n")?;
@@ -87,7 +87,7 @@ impl fmt::Display for ServiceCount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "  - line: {}\n  - length:{}\n  - priority:{:?}",
+            "  - line: {}\n  - length: {}\n  - priority: {:?}",
             &self.line, &self.message_length, &self.priorities
         )
     }
