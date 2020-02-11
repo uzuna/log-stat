@@ -4,6 +4,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use log::warn;
 use serde::{Deserialize, Deserializer};
 use serde_derive::*;
+use std::borrow::Cow;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -25,7 +26,7 @@ pub enum Log<'a> {
   Invalid(#[serde(borrow)] Invalid<'a>),
 }
 
-/// Kernelログ
+/// Journalログ
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Journal<'a> {
   #[serde(rename(deserialize = "_PID"), deserialize_with = "from_str")]
@@ -41,12 +42,13 @@ pub struct Journal<'a> {
 
   #[serde(
     rename(deserialize = "_SYSTEMD_UNIT"),
-    default = "default_systemd_unit"
+    default = "default_systemd_unit",
+    borrow
   )]
-  pub systemd_unit: &'a str,
+  pub systemd_unit: Cow<'a, str>,
 
-  #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  #[serde(rename(deserialize = "MESSAGE"), borrow)]
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -66,15 +68,16 @@ pub struct Journal<'a> {
 pub struct Kernel<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
-    default = "default_syslog_identity"
+    default = "default_syslog_identity",
+    borrow
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
-  #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  #[serde(rename(deserialize = "MESSAGE"), borrow)]
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -94,21 +97,23 @@ pub struct Kernel<'a> {
 pub struct Stdout<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
-    default = "default_syslog_identity"
+    default = "default_syslog_identity",
+    borrow
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "_SYSTEMD_UNIT"),
-    default = "default_systemd_unit"
+    default = "default_systemd_unit",
+    borrow
   )]
-  pub systemd_unit: &'a str,
+  pub systemd_unit: Cow<'a, str>,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
-  #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  #[serde(rename(deserialize = "MESSAGE"), borrow)]
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -128,9 +133,10 @@ pub struct Stdout<'a> {
 pub struct Audit<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
-    default = "default_syslog_identity"
+    default = "default_syslog_identity",
+    borrow
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "PRIORITY"),
@@ -139,8 +145,8 @@ pub struct Audit<'a> {
   )]
   pub priority: u8,
 
-  #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  #[serde(rename(deserialize = "MESSAGE"), borrow)]
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -160,15 +166,16 @@ pub struct Audit<'a> {
 pub struct Syslog<'a> {
   #[serde(
     rename(deserialize = "SYSLOG_IDENTIFIER"),
-    default = "default_syslog_identity"
+    default = "default_syslog_identity",
+    borrow
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
-  #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  #[serde(rename(deserialize = "MESSAGE"), borrow)]
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -190,13 +197,13 @@ pub struct Driver<'a> {
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(rename(deserialize = "PRIORITY"), deserialize_with = "from_str")]
   pub priority: u8,
 
   #[serde(rename(deserialize = "MESSAGE"))]
-  pub message: &'a str,
+  pub message: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -218,7 +225,7 @@ pub struct Invalid<'a> {
     rename(deserialize = "SYSLOG_IDENTIFIER"),
     default = "default_syslog_identity"
   )]
-  pub identifier: &'a str,
+  pub identifier: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "PRIORITY"),
@@ -228,7 +235,7 @@ pub struct Invalid<'a> {
   pub priority: u8,
 
   #[serde(skip_deserializing)]
-  pub error: String,
+  pub error: Cow<'a, str>,
 
   #[serde(
     rename(deserialize = "__REALTIME_TIMESTAMP"),
@@ -254,6 +261,19 @@ where
   T::from_str(&s).map_err(serde::de::Error::custom)
 }
 
+/// バイト列受付
+fn from_str_or_seq<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+  T: FromStr,
+  T::Err: Display,
+  D: Deserializer<'de>,
+{
+  match String::deserialize(deserializer) {
+    Ok(s) => T::from_str(&s).map_err(serde::de::Error::custom),
+    Err(e) => T::from_str("").map_err(serde::de::Error::custom),
+  }
+}
+
 /// unixtime_microsecをDatetime<Utc>に変換
 fn datefmt<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 where
@@ -265,12 +285,12 @@ where
   Ok(Utc.from_utc_datetime(&ts))
 }
 
-fn default_systemd_unit() -> &'static str {
-  "unknown"
+fn default_systemd_unit() -> Cow<'static, str> {
+  "unknown".into()
 }
 
-fn default_syslog_identity() -> &'static str {
-  "unknown"
+fn default_syslog_identity() -> Cow<'static, str> {
+  "unknown".into()
 }
 
 /// 意図しないフォーマットや項目の不足がまだあるため
@@ -280,7 +300,7 @@ pub fn deserialize_fallback(log: &str) -> Result<Log, serde_json::error::Error> 
     Ok(p) => Ok(p),
     Err(e) => {
       let mut p = serde_json::from_str::<Invalid>(log)?;
-      p.error = e.to_string();
+      p.error = e.to_string().into();
       warn!("deserialize: {}, {:?}", p.identifier, e);
       Ok(Log::Invalid(p))
     }
@@ -307,19 +327,21 @@ mod tests {
     Long(#[serde(borrow)] StringStruct<'a>),
     Short(#[serde(borrow)] StrStruct<'a>),
   }
+
   #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
   struct StrStruct<'a> {
     pub identifier: &'a str,
     #[serde(default = "default_message_str")]
-    pub message: &'a str,
+    pub message: Cow<'a, str>,
     pub number: u64,
   }
+
   fn default_message_string() -> String {
     "unknown".to_string()
   }
 
-  fn default_message_str() -> &'static str {
-    "unknown"
+  fn default_message_str() -> Cow<'static, str> {
+    "unknown".into()
   }
 
   #[test]

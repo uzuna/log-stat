@@ -15,10 +15,13 @@ build_dev_arm:
 
 # release build
 # debug optionもなにもつかわない
-.PHONY: build build_amd64 build_arm
+.PHONY: build build_amd64 build_arm rebuild_amd64 rebuild_arm
 build: build_amd64 build_arm
 
 build_amd64: target/${TARGET_AMD64}/release/logstat
+rebuild_amd64: 
+	rm target/${TARGET_AMD64}/release/logstat || true
+	make build_amd64
 
 target/${TARGET_AMD64}/release/logstat:
 	# RUSTFLAGS=${RUSTFLAGS} cross build --target=x86_64-unknown-linux-gnu --release
@@ -26,6 +29,9 @@ target/${TARGET_AMD64}/release/logstat:
 
 
 build_arm: target/${TARGET_ARM64}/release/logstat
+rebuild_arm: 
+	rm target/${TARGET_ARM64}/release/logstat || true
+	make build_arm
 
 target/${TARGET_ARM64}/release/logstat:
 	RUSTFLAGS=${RUSTFLAGS} cross build --target=${TARGET_ARM64} --release

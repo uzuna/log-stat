@@ -22,7 +22,7 @@ impl fmt::Display for LogReport {
         for (name, srv) in &self.service {
             list.push((name, srv))
         }
-        list.sort_by(|(_name_a, srv_a), (_name_b, srv_b)| return srv_a.compare_count(srv_b));
+        list.sort_by(|(_name_a, srv_a), (_name_b, srv_b)| return srv_b.compare_count(srv_a));
         for (name, srv) in &list {
             writeln!(f, "- {}\n{}", name, srv)?;
         }
@@ -147,8 +147,13 @@ pub fn count(input: impl BufRead) -> Result<LogReport, serde_json::error::Error>
                 *counter.facility.entry("driver".to_string()).or_insert(0) += 1;
                 counter.message_length += l.message.len();
             }
-            _ => {
+            model::Log::Invalid(l) => {
                 *counter.facility.entry("invalid".to_string()).or_insert(0) += 1;
+                let mut s = services_counter
+                    .entry(l.identifier.to_string())
+                    .or_default();
+                s.line += 1;
+                *s.priorities.entry(l.priority).or_insert(0) += 1;
             }
         }
     }
